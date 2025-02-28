@@ -13,8 +13,14 @@ async function getAllFiles(dirPath) {
     return files.flat();
 }
 
-async function convertImages() {
+async function convertImages(quality = 80) { // Значение по умолчанию 80
     try {
+        // Проверяем, что качество находится в допустимом диапазоне (0-100)
+        const qualityValue = Math.max(0, Math.min(100, parseInt(quality)));
+        if (isNaN(qualityValue)) {
+            console.log('⚠️ Указано некорректное значение качества. Используется значение по умолчанию: 80');
+        }
+
         const rootDir = process.cwd();
         const allFiles = await getAllFiles(rootDir);
 
@@ -44,13 +50,13 @@ async function convertImages() {
                     }
 
                     await sharpInstance
-                        .webp({ quality: 80 }) // Качество 80%
+                        .webp({ quality: qualityValue }) // Используем указанное качество
                         .toFile(outputFilePath);
 
                     // Удаляем исходный файл
                     await fs.promises.unlink(file);
 
-                    console.log(`✅ ${file} успешно преобразован в ${outputFileName} и удалён.`);
+                    console.log(`✅ ${file} успешно преобразован в ${outputFileName} с качеством ${qualityValue}% и удалён.`);
                 } catch (err) {
                     console.error(`❌ Ошибка преобразования ${file}:`, err);
                 }
@@ -59,10 +65,12 @@ async function convertImages() {
             }
         }
 
-        console.log('🎉 Все подходящие изображения успешно обработаны и удалены!');
+        console.log(`🎉 Все подходящие изображения успешно обработаны с качеством ${qualityValue}% и удалены!`);
     } catch (err) {
         console.error('❌ Ошибка обработки файлов:', err);
     }
 }
 
-convertImages();
+// Получаем аргумент качества из командной строки
+const qualityArg = process.argv[2];
+convertImages(qualityArg);
